@@ -58,7 +58,7 @@
 - **Single file:** `pacman.html` — HTML, CSS, and JavaScript in one file; canvas 280×320, pixel-style rendering.
 - **Maze:** Programmatic grid maze (walls, open paths). Collect all dots to win; hit a ghost to lose.
 - **Player:** Cursor logo (`cursor-logo.png`) as Pac-Man; rotates with direction; black pixels made transparent. Fallback: classic yellow Pac-Man shape if image fails.
-- **Collectibles:** Dots use Claude code icon (`dot-icon.png`) with transparent background; fallback: yellow circles. 10 points per dot; score shown at bottom of canvas.
+- **Collectibles:** Dots use Claude code icon (`dot-icon.png`) with transparent background; fallback: yellow circles. 100 points per dot; score shown at bottom of canvas.
 - **Ghosts:** Two ghosts (pink/red with white eyes) that move randomly through the maze. Collision with Pac-Man = Game Over.
 - **Controls:** Click canvas to focus, then Arrow keys or WASD to move.
 - **Start/End screens:** "Click here, then use Arrow keys or WASD" before start; "YOU WIN!" or "GAME OVER" with final score when the game ends.

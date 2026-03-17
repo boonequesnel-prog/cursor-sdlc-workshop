@@ -27,5 +27,5 @@ If the images are missing, the game uses fallbacks: a yellow Pac-Man shape and y
 ## What’s included
 
 - Single-file game: `pacman.html` (HTML, CSS, JS).
-- Maze, score (10 pts per dot), two ghosts, win/lose screens.
+- Maze, score (100 pts per dot), two ghosts, win/lose screens.
 - Matches the [PRD](../prd.md) in the project folder.
