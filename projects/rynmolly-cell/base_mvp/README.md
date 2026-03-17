@@ -21,3 +21,15 @@ This folder is where your project code lives.
 ### After You're Done
 
 > **Ask Cursor:** "Commit all my changes with the message 'Base MVP scaffold', push to my fork, and open a PR to the original repo"
+
+## Run locally
+1. From this folder (`projects/rynmolly-cell/base_mvp/`), start:
+   ```bash
+   python3 -m http.server 8000
+   ```
+2. Open:
+   - `http://localhost:8000/index.html`
+
+## Controls
+- `Click` or `Space` to flap
+- `R` to restart after game over

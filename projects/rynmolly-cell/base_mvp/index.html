@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Flappy Cursor (MVP)</title>
+    <style>
+      body {
+        margin: 0;
+        background: #0b1020;
+        color: #e9eefc;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+          Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      .wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+      }
+      canvas {
+        background: linear-gradient(#4ec5f1 0%, #b2e0f7 100%);
+        border: 2px solid rgba(233, 238, 252, 0.25);
+        border-radius: 8px;
+      }
+      .hint {
+        font-size: 14px;
+        opacity: 0.9;
+        text-align: center;
+        max-width: 560px;
+      }
+      kbd {
+        background: rgba(233, 238, 252, 0.12);
+        border: 1px solid rgba(233, 238, 252, 0.2);
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <canvas id="game" width="420" height="560" aria-label="Flappy Cursor game"></canvas>
+      <div class="hint">
+        Click or press <kbd>Space</kbd> to flap. Restart with <kbd>R</kbd>.
+      </div>
+    </div>
+
+    <script>
+      // Minimal Flappy Bird-style MVP: single canvas game loop.
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const GROUND_H = 60;
+
+      // Bird
+      const bird = {
+        x: 110,
+        y: H / 2,
+        r: 14,
+        vy: 0,
+      };
+
+      const PHYSICS = {
+        gravity: 0.55,
+        flapV: -9.8,
+        maxFall: 9,
+      };
+
+      // Pipes
+      const pipe = {
+        w: 62,
+        gap: 165,
+        speed: 2.6,
+        spawnEveryFrames: 92,
+        margin: 40,
+      };
+
+      function clamp(n, a, b) {
+        return Math.max(a, Math.min(b, n));
+      }
+
+      function circleVsPipe(b, p) {
+        const left = p.x;
+        const right = p.x + p.w;
+        const topH = p.top;
+        const bottomY = p.bottom;
+
+        // Quick reject using x overlap.
+        if (b.x + b.r < left) return false;
+        if (b.x - b.r > right) return false;
+
+        // If bird overlaps pipe columns, check y overlap with open gap.
+        if (b.y - b.r < topH) return true;
+        if (b.y + b.r > bottomY) return true;
+        return false;
+      }
+
+      // Game state
+      const state = {
+        mode: "ready", // "ready" | "running" | "gameover"
+        score: 0,
+        frame: 0,
+        pipes: [],
+      };
+
+      function reset() {
+        state.mode = "ready";
+        state.score = 0;
+        state.frame = 0;
+        state.pipes = [];
+        bird.y = H / 2;
+        bird.vy = 0;
+      }
+
+      function start() {
+        if (state.mode !== "ready") return;
+        state.mode = "running";
+      }
+
+      function flap() {
+        if (state.mode === "gameover") return;
+        if (state.mode === "ready") start();
+        bird.vy = PHYSICS.flapV;
+      }
+
+      function spawnPipe() {
+        const topMin = pipe.margin;
+        const topMax = H - GROUND_H - pipe.gap - pipe.margin;
+        const top = topMin + Math.random() * (topMax - topMin);
+        const p = {
+          x: W + 5,
+          top,
+          bottom: top + pipe.gap,
+          passed: false,
+        };
+        state.pipes.push(p);
+      }
+
+      function update() {
+        state.frame++;
+
+        // Bird physics
+        bird.vy += PHYSICS.gravity;
+        bird.vy = Math.min(bird.vy, PHYSICS.maxFall);
+        bird.y += bird.vy;
+
+        // Pipes
+        for (const p of state.pipes) {
+          p.x -= pipe.speed;
+        }
+
+        // Spawn
+        if (state.frame % pipe.spawnEveryFrames === 0) spawnPipe();
+
+        // Score + collision
+        const groundY = H - GROUND_H;
+        if (bird.y - bird.r < 0) {
+          state.mode = "gameover";
+          return;
+        }
+        if (bird.y + bird.r > groundY) {
+          state.mode = "gameover";
+          return;
+        }
+
+        for (const p of state.pipes) {
+          if (!p.passed && p.x + pipe.w < bird.x) {
+            p.passed = true;
+            state.score += 1;
+          }
+          if (circleVsPipe(bird, p)) {
+            state.mode = "gameover";
+            return;
+          }
+        }
+
+        // Remove offscreen pipes
+        state.pipes = state.pipes.filter((p) => p.x + pipe.w > -10);
+      }
+
+      function drawGround() {
+        const y = H - GROUND_H;
+        ctx.fillStyle = "#c4a265";
+        ctx.fillRect(0, y, W, GROUND_H);
+
+        // simple grass line
+        ctx.fillStyle = "#2e7d32";
+        for (let x = 0; x < W; x += 18) {
+          ctx.fillRect(x, y - 2, 6, 2);
+        }
+      }
+
+      function drawPipes() {
+        for (const p of state.pipes) {
+          // Top pipe
+          ctx.fillStyle = "#38a169";
+          ctx.fillRect(p.x, 0, pipe.w, p.top);
+          // Bottom pipe
+          ctx.fillStyle = "#2f855a";
+          ctx.fillRect(p.x, p.bottom, pipe.w, H - GROUND_H - p.bottom);
+
+          // Caps
+          ctx.fillStyle = "#1f7a4c";
+          ctx.fillRect(p.x - 4, p.top - 10, pipe.w + 8, 10);
+          ctx.fillRect(p.x - 4, p.bottom, pipe.w + 8, 10);
+        }
+      }
+
+      function drawBird() {
+        // Simple "cursor" bird shape: yellow circle with a small eye.
+        const tilt = clamp(bird.vy * 0.06, -0.6, 0.6);
+        ctx.save();
+        ctx.translate(bird.x, bird.y);
+        ctx.rotate(tilt);
+
+        // Body
+        ctx.fillStyle = "#ffd93d";
+        ctx.beginPath();
+        ctx.arc(0, 0, bird.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eye
+        ctx.fillStyle = "#111827";
+        ctx.beginPath();
+        ctx.arc(bird.r * 0.35, -bird.r * 0.2, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawUI() {
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
+        ctx.font = "bold 22px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+        ctx.fillText(`Score: ${state.score}`, 14, 34);
+
+        if (state.mode !== "running") {
+          ctx.fillStyle = "rgba(0,0,0,0.45)";
+          ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = "#ffffff";
+          ctx.textAlign = "center";
+          if (state.mode === "ready") {
+            ctx.font = "bold 26px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+            ctx.fillText("Flappy Cursor", W / 2, H / 2 - 30);
+            ctx.font = "16px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+            ctx.fillText("Click or press SPACE to start", W / 2, H / 2 + 10);
+          } else {
+            ctx.font = "bold 28px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+            ctx.fillText("Game Over", W / 2, H / 2 - 20);
+            ctx.font = "16px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+            ctx.fillText(`Score: ${state.score}`, W / 2, H / 2 + 15);
+            ctx.fillText("Press R to restart", W / 2, H / 2 + 40);
+          }
+          ctx.textAlign = "start";
+        }
+      }
+
+      function draw() {
+        // Sky gradient already set via CSS background; just clear the canvas.
+        ctx.clearRect(0, 0, W, H);
+
+        // Background fill (so it looks correct if CSS isn't applied)
+        const grad = ctx.createLinearGradient(0, 0, 0, H - GROUND_H);
+        grad.addColorStop(0, "#4ec5f1");
+        grad.addColorStop(1, "#b2e0f7");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H - GROUND_H);
+
+        drawPipes();
+        drawBird();
+        drawGround();
+        drawUI();
+      }
+
+      function loop() {
+        if (state.mode === "running") update();
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      // Controls
+      window.addEventListener("keydown", (e) => {
+        if (e.code === "Space") {
+          e.preventDefault();
+          flap();
+        } else if (e.key === "r" || e.key === "R") {
+          reset();
+        }
+      });
+      canvas.addEventListener("click", () => {
+        canvas.focus?.();
+        flap();
+      });
+
+      reset();
+      requestAnimationFrame(loop);
+    </script>
+  </body>
+</html>
+
