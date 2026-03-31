@@ -1,6 +1,6 @@
-# Turf Quoting Tool (Base MVP)
+# Greens on Q (Base MVP)
 
-Single-page React app: enter lawn dimensions or total square footage, set waste allowance and rates, and get a line-item estimate (turf, optional labor, optional delivery).
+Single-page React app: enter golf green, fringe tier, lawn, bunker size, and chipping count; pick site access; get an itemized estimate from the static price table in `src/components/GolfTurfQuote.jsx`.
 
 ## Run locally
 
@@ -23,4 +23,4 @@ npm run preview
 ## Notes
 
 - All calculations run in the browser — no backend, no API calls (workshop constraints).
-- PRD reference: [Turf quoting tool PRD (Notion)](https://www.notion.so/cursorai/Turf-quoting-tool-PRD-334da74ef04580a4a9f8f3b87acff4aa).
+- PRD: `../prd.md` (Notion source: [Turf quoting tool PRD](https://www.notion.so/cursorai/Turf-quoting-tool-PRD-334da74ef04580a4a9f8f3b87acff4aa)).
